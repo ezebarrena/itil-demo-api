@@ -1,0 +1,29 @@
+name: Deploy production
+
+# Simulated deployment: no real server is provisioned. Using a GitHub "environment"
+# makes GitHub record a Deployment, which ITIL Scanner reads as change evidence.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Deploy (simulated)
+        run: echo "Deploying itil-demo-api ${GITHUB_SHA::7} to production"
+      - name: Smoke test after deploy
+        run: |
+          PORT=3001 node src/server.js &
+          sleep 2
+          curl --fail --silent http://localhost:3001/api/message
